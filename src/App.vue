@@ -31,6 +31,7 @@ import { RouterLink, RouterView } from 'vue-router';
 import { ConfigProvider as VanConfigProvider } from 'vant';
 
 import GlobalErrorBoundary from '@/components/common/GlobalErrorBoundary';
+import { useAppointmentStore } from '@/stores/appointmentStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useExchangeStore } from '@/stores/exchangeStore';
 import { useItemStore } from '@/stores/itemStore';
@@ -40,11 +41,17 @@ import { toVantTheme } from '@/utils/themeUtils';
 const authStore = useAuthStore();
 const itemStore = useItemStore();
 const exchangeStore = useExchangeStore();
+const appointmentStore = useAppointmentStore();
 const themeStore = useThemeStore();
 const vantTheme = computed(() => toVantTheme(themeStore.theme));
 
 onMounted(async () => {
   themeStore.hydrate();
-  await Promise.all([authStore.hydrate(), itemStore.hydrate(), exchangeStore.hydrate()]);
+  await Promise.all([
+    authStore.hydrate(),
+    itemStore.hydrate(),
+    exchangeStore.hydrate(),
+    appointmentStore.hydrate(),
+  ]);
 });
 </script>

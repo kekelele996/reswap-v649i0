@@ -17,6 +17,28 @@ const seedExchanges: Exchange[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
   },
+  {
+    id: 'exchange_seed_accepted_1',
+    from_user_id: 'user_me',
+    to_user_id: 'user_chen',
+    from_item_id: 'item_kettle',
+    to_item_id: 'item_books',
+    status: ExchangeStatus.ACCEPTED,
+    message: '咖啡壶换设计书，周末可以约在地铁站交接。',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+  },
+  {
+    id: 'exchange_seed_accepted_2',
+    from_user_id: 'user_lin',
+    to_user_id: 'user_me',
+    from_item_id: 'item_camera',
+    to_item_id: 'item_chair',
+    status: ExchangeStatus.ACCEPTED,
+    message: '那我用拍立得换你的露营椅吧，时间地点你定。',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+  },
 ];
 
 export const exchangeApi = {
@@ -25,6 +47,11 @@ export const exchangeApi = {
     if (exchanges.length) return exchanges;
     await storage.set(STORAGE_KEYS.exchanges, seedExchanges);
     return seedExchanges;
+  },
+
+  async detail(id: string): Promise<Exchange | undefined> {
+    const exchanges = await this.list();
+    return exchanges.find((item) => item.id === id);
   },
 
   async create(draft: ExchangeDraft): Promise<Exchange> {

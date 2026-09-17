@@ -41,6 +41,18 @@ const seedItems: Item[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
   {
+    id: 'item_kettle',
+    user_id: 'user_me',
+    title: '手冲咖啡壶套装',
+    description: '细口壶加分享壶，闲置大半年，想换书或咖啡器具。',
+    category: '家居',
+    condition: ItemCondition.LIKE_NEW,
+    images: [],
+    status: ItemStatus.AVAILABLE,
+    location: '上海 · 徐汇',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+  },
+  {
     id: 'item_lamp',
     user_id: 'user_lin',
     title: '木质小夜灯',

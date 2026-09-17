@@ -17,6 +17,12 @@
       </div>
     </div>
     <p>{{ exchange.message || formatStatusMessage(exchange.status) }}</p>
+    <AppointmentPanel
+      v-if="exchange.status === ExchangeStatus.ACCEPTED"
+      :exchange="exchange"
+      :appointment="appointment"
+      :users="users"
+    />
     <footer>
       <span v-if="fromUser && toUser">{{ fromUser.nickname }} → {{ toUser.nickname }}</span>
       <div v-if="canOperate" class="exchange-card__actions">
@@ -37,10 +43,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import AppointmentPanel from '@/components/common/AppointmentPanel.vue';
 import { ExchangeStatus } from '@/constants/exchange';
 import type { Exchange } from '@/models/exchange';
 import type { Item } from '@/models/item';
 import type { User } from '@/models/user';
+import { useAppointmentStore } from '@/stores/appointmentStore';
 import { useAuthStore } from '@/stores/authStore';
 import { formatDate, formatExchangeStatus, formatStatusMessage, statusToneClass } from '@/utils/formatters';
 
@@ -57,10 +65,12 @@ defineEmits<{
 }>();
 
 const authStore = useAuthStore();
+const appointmentStore = useAppointmentStore();
 const fromItem = computed(() => props.items.find((item) => item.id === props.exchange.from_item_id));
 const toItem = computed(() => props.items.find((item) => item.id === props.exchange.to_item_id));
 const fromUser = computed(() => props.users.find((user) => user.id === props.exchange.from_user_id));
 const toUser = computed(() => props.users.find((user) => user.id === props.exchange.to_user_id));
+const appointment = computed(() => appointmentStore.latestByExchange(props.exchange.id));
 const canOperate = computed(
   () =>
     authStore.currentUser?.id === props.exchange.to_user_id ||

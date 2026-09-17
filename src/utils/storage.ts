@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   users: prefixed('users'),
   items: prefixed('items'),
   exchanges: prefixed('exchanges'),
+  appointments: prefixed('appointments'),
   theme: prefixed('theme'),
   lastClean: prefixed('last-clean'),
 };
@@ -44,6 +45,24 @@ const parseLocal = <T>(key: string): PersistedEnvelope<T> | null => {
 
 const writeLocal = <T>(key: string, payload: T, ttl?: number) => {
   localStorage.setItem(key, JSON.stringify(envelope(payload, ttl)));
+};
+
+export class StorageConflictError extends Error {
+  constructor(key: string, expectedRevision: number | null, actualRevision: number | null) {
+    super(`存储版本冲突（key=${key}, 期望版本=${expectedRevision ?? '空'}, 实际版本=${actualRevision ?? '空'}）`);
+    this.name = 'StorageConflictError';
+  }
+}
+
+interface RevisionedDoc {
+  revision?: number;
+}
+
+export const readLocalPayload = <T>(key: string): T | null => {
+  const localEnvelope = parseLocal<T>(key);
+  if (isExpired(localEnvelope)) return null;
+  if (localEnvelope?.version === STORAGE_VERSION) return localEnvelope.payload;
+  return null;
 };
 
 export const storage = {
@@ -80,6 +99,52 @@ export const storage = {
   async remove(key: string): Promise<void> {
     localStorage.removeItem(key);
     await del(key);
+  },
+
+  // 乐观并发 + 原子提交：
+  // 1. 提交前重读 localStorage（其他标签页的写入立即可见），校验文档 revision 必须与读取时一致；
+  // 2. 同一同步执行段内完成"写入 + 回读校验"，中途没有 await，杜绝同进程交叉写入；
+  // 3. 回读内容与待写不一致则立刻回滚到旧信封并抛出；
+  // 4. 最后才写 IndexedDB，失败时用旧信封回滚 localStorage，保证双存储最终一致。
+  // 任一步失败：新旧状态都不会被部分落盘（全部回滚）。
+  async commitChecked<T extends RevisionedDoc>(key: string, expectedRevision: number | null, next: T): Promise<T> {
+    const freshEnvelope = parseLocal<T>(key);
+    const fresh = freshEnvelope?.version === STORAGE_VERSION ? freshEnvelope.payload : null;
+    const freshRevision = fresh?.revision ?? null;
+    if (freshRevision !== expectedRevision) {
+      throw new StorageConflictError(key, expectedRevision, freshRevision);
+    }
+
+    const nextDoc = { ...toPlain(next), revision: (expectedRevision ?? 0) + 1 };
+    const nextEnvelope = envelope(nextDoc);
+    const previousEnvelope = localStorage.getItem(key);
+
+    try {
+      localStorage.setItem(key, JSON.stringify(nextEnvelope));
+      const readBack = parseLocal<T & RevisionedDoc>(key);
+      const readBackJson = JSON.stringify(readBack?.payload ?? null);
+      if (readBack?.version !== STORAGE_VERSION || readBackJson !== JSON.stringify(nextDoc)) {
+        if (previousEnvelope === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, previousEnvelope);
+        throw new Error('提交后回读不一致，已回滚');
+      }
+    } catch (error) {
+      if (previousEnvelope === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, previousEnvelope);
+      throw error instanceof StorageConflictError
+        ? error
+        : new Error('本地原子提交失败，已回滚');
+    }
+
+    try {
+      await set(key, nextEnvelope);
+    } catch {
+      if (previousEnvelope === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, previousEnvelope);
+      await del(key).catch(() => undefined);
+      throw new Error('持久化到 IndexedDB 失败，已回滚');
+    }
+    return nextDoc;
   },
 
   async cleanExpired(): Promise<void> {

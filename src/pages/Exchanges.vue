@@ -12,6 +12,8 @@
       <span>待确认 {{ stats.pending }}</span>
       <span>已同意 {{ stats.accepted }}</span>
       <span>已完成 {{ stats.completed }}</span>
+      <span>已生效交接 {{ appointmentStats.confirmed }}</span>
+      <span>待双方确认预约 {{ appointmentStats.proposed }}</span>
     </div>
 
     <div class="segmented">
@@ -51,9 +53,11 @@ import { computed, ref } from 'vue';
 
 import EmptyState from '@/components/common/EmptyState.vue';
 import ExchangeCard from '@/components/common/ExchangeCard.vue';
+import { AppointmentStatus } from '@/constants/appointment';
 import { EXCHANGE_STATUS_OPTIONS, ExchangeStatus } from '@/constants/exchange';
 import { PAGE_MESSAGES } from '@/constants/messages';
 import { useExchangeStats } from '@/hooks/useExchangeStats';
+import { useAppointmentStore } from '@/stores/appointmentStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useExchangeStore } from '@/stores/exchangeStore';
 import { useItemStore } from '@/stores/itemStore';
@@ -61,7 +65,13 @@ import { useItemStore } from '@/stores/itemStore';
 const authStore = useAuthStore();
 const itemStore = useItemStore();
 const exchangeStore = useExchangeStore();
+const appointmentStore = useAppointmentStore();
 const tab = ref<'sent' | 'received'>('sent');
+
+const appointmentStats = computed(() => ({
+  confirmed: appointmentStore.appointments.filter((item) => item.status === AppointmentStatus.CONFIRMED).length,
+  proposed: appointmentStore.appointments.filter((item) => item.status === AppointmentStatus.PROPOSED).length,
+}));
 
 const mine = computed(() => {
   if (!authStore.currentUser) return [];
@@ -76,6 +86,8 @@ const stats = useExchangeStats(() => exchangeStore.exchanges);
 const completeExchange = async (id: string) => {
   await exchangeStore.complete(id);
   itemStore.items = itemStore.items.map((item) => item);
+  // 交换完成后对账关闭其交接预约、释放时段占用
+  await appointmentStore.hydrate();
 };
 
 void ExchangeStatus.PENDING;

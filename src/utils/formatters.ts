@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 
+import { AppointmentStatus } from '@/constants/appointment';
 import { ExchangeStatus } from '@/constants/exchange';
 import { ItemCondition, ItemStatus } from '@/constants/item';
 import { STATUS_MESSAGE_MAP } from '@/constants/messages';
@@ -25,6 +26,26 @@ export const formatExchangeStatus = (status: ExchangeStatus) => {
   return map[status];
 };
 
+export const formatAppointmentStatus = (status: AppointmentStatus) => {
+  const map: Record<AppointmentStatus, string> = {
+    [AppointmentStatus.PROPOSED]: '待双方确认',
+    [AppointmentStatus.CONFIRMED]: '预约已生效',
+    [AppointmentStatus.CANCELLED]: '已取消',
+    [AppointmentStatus.EXPIRED]: '已过期',
+  };
+  return map[status];
+};
+
+export const formatAppointmentRange = (startAt: string, endAt: string) =>
+  `${dayjs(startAt).format('YYYY-MM-DD HH:mm')} - ${dayjs(endAt).format('HH:mm')}`;
+
+export const formatConfirmParties = (fromConfirmed: boolean, toConfirmed: boolean) => {
+  if (fromConfirmed && toConfirmed) return '双方均已确认';
+  if (fromConfirmed) return '发起方已确认，等待对方确认';
+  if (toConfirmed) return '接收方已确认，等待发起方确认';
+  return '双方均未确认';
+};
+
 export const formatCondition = (condition: ItemCondition) => {
   const map: Record<ItemCondition, string> = {
     [ItemCondition.NEW]: '全新',
@@ -42,11 +63,15 @@ export const formatCreditLevel = (score: number) => {
   return '需谨慎';
 };
 
-export const statusToneClass = (status: ItemStatus | ExchangeStatus) => {
+export const statusToneClass = (status: ItemStatus | ExchangeStatus | AppointmentStatus) => {
+  if (status === AppointmentStatus.CONFIRMED) return 'status-good';
+  if (status === AppointmentStatus.PROPOSED) return 'status-wait';
+  if (status === AppointmentStatus.CANCELLED || status === AppointmentStatus.EXPIRED) return 'status-muted';
   if (status === ItemStatus.AVAILABLE || status === ExchangeStatus.ACCEPTED) return 'status-good';
   if (status === ItemStatus.OFFLINE || status === ExchangeStatus.REJECTED) return 'status-muted';
   if (status === ItemStatus.EXCHANGED || status === ExchangeStatus.COMPLETED) return 'status-done';
   return 'status-wait';
 };
 
-export const formatStatusMessage = (status: ItemStatus | ExchangeStatus) => STATUS_MESSAGE_MAP[status];
+export const formatStatusMessage = (status: ItemStatus | ExchangeStatus | AppointmentStatus) =>
+  STATUS_MESSAGE_MAP[status];

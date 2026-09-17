@@ -594,6 +594,115 @@ textarea {
   gap: 8px;
 }
 
+.appointment-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px dashed var(--rs-border);
+  border-radius: 10px;
+  padding: 12px;
+  background: color-mix(in oklch, var(--rs-surface), var(--rs-primary) 96%);
+}
+
+.appointment-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.appointment-form {
+  display: grid;
+  gap: 10px;
+}
+
+.appointment-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: color-mix(in oklch, var(--rs-text), transparent 18%);
+}
+
+.appointment-form input {
+  padding: 9px 10px;
+  border: 1px solid var(--rs-border);
+  border-radius: 8px;
+  background: var(--rs-surface);
+  color: var(--rs-text);
+}
+
+.appointment-detail {
+  display: grid;
+  gap: 10px;
+}
+
+.appointment-detail__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.appointment-detail__grid dt {
+  color: color-mix(in oklch, var(--rs-text), transparent 42%);
+  font-size: 0.78rem;
+}
+
+.appointment-detail__grid dd {
+  margin: 2px 0 0;
+}
+
+.appointment-confirm-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.appointment-confirm-row li {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  background: color-mix(in oklch, var(--rs-accent), transparent 84%);
+}
+
+.appointment-confirm-row li.done {
+  background: color-mix(in oklch, var(--rs-primary), transparent 82%);
+}
+
+.appointment-hint {
+  margin: 0;
+  color: color-mix(in oklch, var(--rs-text), transparent 30%);
+  font-size: 0.82rem;
+}
+
+.appointment-conflict {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.appointment-conflict-list {
+  margin: 0;
+  padding-left: 18px;
+  color: color-mix(in oklch, var(--rs-text), transparent 22%);
+  font-size: 0.8rem;
+}
+
+.appointment-reason {
+  margin: 0;
+  font-size: 0.8rem;
+  color: color-mix(in oklch, var(--rs-text), transparent 30%);
+}
+
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .profile-side {
   display: grid;
   gap: 18px;
