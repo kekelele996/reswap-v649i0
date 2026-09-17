@@ -17,6 +17,7 @@ ReSwap 是一个纯前端以物换物 Web 应用。用户可以本地模拟登�
 - 物品详情、物主资料、选择自己的物品发起交换。
 - 发布物品，支持本地 base64 图片上传、分类和成色选择。
 - 交换管理，区分我发起的和我收到的请求，支持同意、拒绝、完成。
+- **交接预约：已同意（accepted）的交换可预约线下交接。双方各自可提出时间地点，双方都确认后预约才生效；同一参与者与已有生效预约时间重叠的新预约不得生效；改约需双方重新确认；取消或过期立即释放原时段。预约记录、双方确认与时段占用打包为同一份数据，通过乐观锁事务一次落盘，任一步失败全部回滚。**
 - 个人中心，编辑资料、上传头像、查看我发布的物品。
 - 主题切换、全局错误处理和 Vant 提示。
 
@@ -49,19 +50,29 @@ pnpm build
 
 ```text
 src/
-├── api/              # userApi.ts, itemApi.ts, exchangeApi.ts：本地数据 API 层
-├── stores/           # authStore.ts, itemStore.ts, exchangeStore.ts, themeStore.ts
-├── models/           # user.ts, item.ts, exchange.ts：独立数据模型
+├── api/              # userApi.ts, itemApi.ts, exchangeApi.ts, appointmentApi.ts：本地数据 API 层
+├── stores/           # authStore.ts, itemStore.ts, exchangeStore.ts, appointmentStore.ts, themeStore.ts
+├── models/           # user.ts, item.ts, exchange.ts, appointment.ts：独立数据模型
 ├── types/            # 共享类型补充
-├── components/common/# 共享业务组件和 GlobalErrorBoundary
+├── components/common/# 共享业务组件（含 AppointmentPanel）和 GlobalErrorBoundary
 ├── hooks/            # useAuth.ts, useLocalStorage.ts, useExchangeStats.ts
 ├── pages/            # Home, ItemDetail, Publish, Exchanges, Profile
 ├── router/           # index.ts + guards.ts
-├── utils/            # storage.ts, formatters.ts, validators.ts, message.ts, themeUtils.ts
-├── constants/        # item.ts, exchange.ts, themes.ts, messages.ts
+├── utils/            # storage.ts（含单 key 乐观锁事务）, appointmentRules.ts, formatters.ts, validators.ts, message.ts, themeUtils.ts
+├── constants/        # item.ts, exchange.ts, appointment.ts, themes.ts, messages.ts
 ├── App.vue
 ├── main.ts
 └── styles.css
+
+scripts/
+├── test-appointments.mjs # 交接预约核心不变量测试（20 个场景 / 68 条断言，纯内存运行）
+└── test-transaction.mjs  # storage.transaction 事务语义测试（串行互斥 / 乐观锁回滚 / 异常不落盘）
+```
+
+运行测试（无需浏览器，esbuild 打包 TS 后在 Node 中执行）：
+
+```bash
+pnpm test
 ```
 
 ## 数据持久化说明
@@ -70,6 +81,16 @@ src/
 - 所有 `api/*Api.ts` 通过 `storage.ts` 读写数据，不在组件里直接写业务数据。
 - 存储层包含序列化、版本号、过期清理、存储 key 管理。
 - 首次启动会写入演示用户、物品和交换请求。
+
+### 交接预约的一致性保证
+
+- 预约记录与时段占用（`appointments` + `occupied_slots` + 乐观锁 `revision`）打包在同一个存储 key 的同一份数据里，配合 `storage.transaction()` 实现：
+  - **一次落盘**：双方确认完成的同一刻，预约状态变为 ACTIVE 并写入双方两个时段占用，二者在同一次 `set` 中提交；任一步抛错则不写盘，全部回滚。
+  - **串行互斥**：同标签页内对同一 key 的事务按 Promise 队列串行执行，避免刷新重试/双击产生交错写入。
+  - **乐观锁**：提交前重新读取 revision，被其他标签页推进则整体失败重试，杜绝两个时段同时生效。
+- 待确认（PENDING）预约**不占用**时段；只有双方都确认进入 ACTIVE 才占用，确认时做两次重叠校验，冲突则回滚。
+- 改约回到 PENDING、`proposal_version + 1`、双方重新确认，旧时段立即释放；取消（CANCELLED）或过期（EXPIRED，含 30 分钟宽限期）同样释放时段。历史记录保留，每段交换任意时刻至多一条非终态预约。
+- 刷新/重试幂等：方案内容指纹 `proposal_hash` 识别重复提案；重复确认、相同内容改约均为幂等操作。
 
 ## 横切关注点
 
@@ -111,6 +132,24 @@ src/
 - `src/hooks/useExchangeStats.ts`
 - `src/components/common/ExchangeCard.vue`
 - `src/pages/ItemDetail.vue`
+- `src/pages/Exchanges.vue`
+
+### AppointmentStatus
+
+定义位置：`src/constants/appointment.ts`
+
+值：PENDING = 'pending'（待双方确认）、ACTIVE = 'active'（已生效）、CANCELLED = 'cancelled'（已取消）、EXPIRED = 'expired'（已过期）
+
+出现位置：
+
+- `src/models/appointment.ts`
+- `src/constants/messages.ts`（独立的 `APPOINTMENT_STATUS_MESSAGE_MAP`，因与 ExchangeStatus 枚举字符串值相同）
+- `src/api/appointmentApi.ts`
+- `src/stores/appointmentStore.ts`
+- `src/router/guards.ts`
+- `src/utils/formatters.ts`
+- `src/utils/appointmentRules.ts`
+- `src/components/common/AppointmentPanel.vue`
 - `src/pages/Exchanges.vue`
 
 ## 分层与高耦合约束

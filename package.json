@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 18415",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 18415"
+    "preview": "vite preview --host 0.0.0.0 --port 18415",
+    "test:appointments": "node scripts/test-appointments.mjs",
+    "test:transactions": "node scripts/test-transaction.mjs",
+    "test": "node scripts/test-appointments.mjs && node scripts/test-transaction.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.4",

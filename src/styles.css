@@ -594,6 +594,117 @@ textarea {
   gap: 8px;
 }
 
+.appointment-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid color-mix(in oklch, var(--rs-primary), transparent 78%);
+  border-radius: 10px;
+  padding: 14px;
+  background: color-mix(in oklch, var(--rs-primary), transparent 95%);
+}
+
+.appointment-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.appointment-panel__head .eyebrow {
+  margin: 0;
+}
+
+.appointment-panel__slot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.appointment-panel__slot div {
+  display: grid;
+  gap: 4px;
+  border-radius: 7px;
+  background: var(--rs-surface);
+  padding: 9px 10px;
+}
+
+.appointment-panel__slot dt {
+  color: color-mix(in oklch, var(--rs-text), transparent 45%);
+  font-size: 0.75rem;
+}
+
+.appointment-panel__slot dd {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.appointment-panel__parties {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.appointment-panel__parties li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: color-mix(in oklch, var(--rs-text), transparent 35%);
+}
+
+.appointment-panel__parties li.confirmed {
+  color: var(--rs-text);
+}
+
+.appointment-panel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--rs-text), transparent 70%);
+}
+
+.appointment-panel__parties li.confirmed .appointment-panel__dot {
+  background: var(--rs-primary);
+}
+
+.appointment-panel__parties em {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-style: normal;
+}
+
+.appointment-panel__hint {
+  margin: 0;
+  color: color-mix(in oklch, var(--rs-text), transparent 30%);
+  font-size: 0.8rem;
+}
+
+.appointment-panel__form {
+  display: grid;
+  gap: 10px;
+  border-top: 1px dashed color-mix(in oklch, var(--rs-primary), transparent 75%);
+  padding-top: 12px;
+}
+
+.appointment-panel__form label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: color-mix(in oklch, var(--rs-text), transparent 35%);
+}
+
+.appointment-panel__form input,
+.appointment-panel__form select {
+  width: 100%;
+}
+
+.exchange-card__actions button.is-disabled {
+  opacity: 0.6;
+}
+
 .profile-side {
   display: grid;
   gap: 18px;

@@ -12,6 +12,7 @@
       <span>待确认 {{ stats.pending }}</span>
       <span>已同意 {{ stats.accepted }}</span>
       <span>已完成 {{ stats.completed }}</span>
+      <span>生效预约 {{ appointmentStore.activeCount }}</span>
     </div>
 
     <div class="segmented">
@@ -55,12 +56,14 @@ import { EXCHANGE_STATUS_OPTIONS, ExchangeStatus } from '@/constants/exchange';
 import { PAGE_MESSAGES } from '@/constants/messages';
 import { useExchangeStats } from '@/hooks/useExchangeStats';
 import { useAuthStore } from '@/stores/authStore';
+import { useAppointmentStore } from '@/stores/appointmentStore';
 import { useExchangeStore } from '@/stores/exchangeStore';
 import { useItemStore } from '@/stores/itemStore';
 
 const authStore = useAuthStore();
 const itemStore = useItemStore();
 const exchangeStore = useExchangeStore();
+const appointmentStore = useAppointmentStore();
 const tab = ref<'sent' | 'received'>('sent');
 
 const mine = computed(() => {

@@ -1,8 +1,9 @@
 import dayjs from 'dayjs';
 
+import { AppointmentStatus } from '@/constants/appointment';
 import { ExchangeStatus } from '@/constants/exchange';
 import { ItemCondition, ItemStatus } from '@/constants/item';
-import { STATUS_MESSAGE_MAP } from '@/constants/messages';
+import { APPOINTMENT_STATUS_MESSAGE_MAP, STATUS_MESSAGE_MAP } from '@/constants/messages';
 
 export const formatDate = (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm');
 
@@ -50,3 +51,25 @@ export const statusToneClass = (status: ItemStatus | ExchangeStatus) => {
 };
 
 export const formatStatusMessage = (status: ItemStatus | ExchangeStatus) => STATUS_MESSAGE_MAP[status];
+
+export const formatAppointmentStatus = (status: AppointmentStatus) => {
+  const map: Record<AppointmentStatus, string> = {
+    [AppointmentStatus.PENDING]: '待双方确认',
+    [AppointmentStatus.ACTIVE]: '已生效',
+    [AppointmentStatus.CANCELLED]: '已取消',
+    [AppointmentStatus.EXPIRED]: '已过期',
+  };
+  return map[status];
+};
+
+export const formatAppointmentSlot = (startAt: string, endAt: string) =>
+  `${dayjs(startAt).format('YYYY-MM-DD HH:mm')} - ${dayjs(endAt).format('HH:mm')}`;
+
+export const appointmentStatusToneClass = (status: AppointmentStatus) => {
+  if (status === AppointmentStatus.ACTIVE) return 'status-good';
+  if (status === AppointmentStatus.PENDING) return 'status-wait';
+  return 'status-muted';
+};
+
+export const formatAppointmentStatusMessage = (status: AppointmentStatus) =>
+  APPOINTMENT_STATUS_MESSAGE_MAP[status];

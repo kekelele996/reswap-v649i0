@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   users: prefixed('users'),
   items: prefixed('items'),
   exchanges: prefixed('exchanges'),
+  appointments: prefixed('appointments'),
   theme: prefixed('theme'),
   lastClean: prefixed('last-clean'),
 };
@@ -98,4 +99,46 @@ export const storage = {
   createId(prefix: string): string {
     return `${prefix}_${crypto.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`}`;
   },
+
+  /**
+   * 单 key 原子事务：读取最新快照 -> 交由 mutator 产生下一版 -> 一次性整体写回。
+   *
+   * - 同标签页内通过按 key 串行的 Promise 队列互斥，杜绝两个操作交错读到旧快照；
+   * - 多标签页通过 expectedRevision 乐观锁：提交前重新读取，revision 已被其他
+   *   标签页推进则整个事务回滚重试，保证「两个时段不会同时生效」；
+   * - mutator 内抛错即放弃写回（全部回滚），不会出现预约与时段占用写一半。
+   *
+   * 注意：localStorage 的 setItem 对单个 key 是原子的，预约记录与时段占用打包在
+   * 同一个 key 的同一个 envelope 内，因此「预约 + 双方确认 + 时段占用」一次落盘。
+   */
+  async transaction<T>(
+    key: string,
+    fallback: T,
+    mutator: (snapshot: T) => T | Promise<T>,
+    options: { getRevision?: (snapshot: T) => number; bumpRevision?: (snapshot: T, next: T) => T } = {},
+  ): Promise<T> {
+    const queue = transactionQueues.get(key) ?? Promise.resolve();
+    const run = queue.then(async () => {
+      const beforeRead = await this.get<T>(key, fallback);
+      const expectedRevision = options.getRevision?.(beforeRead) ?? 0;
+      const next = await mutator(beforeRead);
+      if (options.getRevision) {
+        const latest = await this.get<T>(key, fallback);
+        if (options.getRevision(latest) !== expectedRevision) {
+          throw new Error('数据已被其他页面更新，请刷新后重试');
+        }
+      }
+      const committed = options.bumpRevision ? options.bumpRevision(beforeRead, next) : next;
+      await this.set(key, committed);
+      return committed;
+    });
+    const tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    transactionQueues.set(key, tail);
+    return run;
+  },
 };
+
+const transactionQueues = new Map<string, Promise<void>>();

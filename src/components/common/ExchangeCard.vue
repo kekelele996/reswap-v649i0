@@ -17,6 +17,11 @@
       </div>
     </div>
     <p>{{ exchange.message || formatStatusMessage(exchange.status) }}</p>
+    <AppointmentPanel
+      v-if="exchange.status === ExchangeStatus.ACCEPTED"
+      :exchange="exchange"
+      :users="users"
+    />
     <footer>
       <span v-if="fromUser && toUser">{{ fromUser.nickname }} → {{ toUser.nickname }}</span>
       <div v-if="canOperate" class="exchange-card__actions">
@@ -37,6 +42,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import AppointmentPanel from '@/components/common/AppointmentPanel.vue';
 import { ExchangeStatus } from '@/constants/exchange';
 import type { Exchange } from '@/models/exchange';
 import type { Item } from '@/models/item';

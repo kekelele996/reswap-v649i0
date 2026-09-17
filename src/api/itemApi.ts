@@ -52,6 +52,18 @@ const seedItems: Item[] = [
     location: '杭州 · 西湖',
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 90).toISOString(),
   },
+  {
+    id: 'item_speaker',
+    user_id: 'user_lin',
+    title: '漫步者小型蓝牙音箱',
+    description: '桌面蓝牙音箱，功能完好，想换露营装备或书籍。',
+    category: '数码',
+    condition: ItemCondition.LIKE_NEW,
+    images: [],
+    status: ItemStatus.AVAILABLE,
+    location: '杭州 · 西湖',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+  },
 ];
 
 export const itemApi = {
